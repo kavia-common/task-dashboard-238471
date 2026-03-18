@@ -1,0 +1,173 @@
+TASK DASHBOARD - PROJECT OVERVIEW
+================================
+
+1) What this repository is
+--------------------------
+This repository contains "Task Dashboard", a single-page task management application built with React and Vite. The app allows users to create tasks, organize them with tags, and view/manage them across multiple configurable task lists. The UI is modern and card-based, styled with Tailwind CSS, and includes motion/transition effects using Framer Motion.
+
+This project is intended as a demonstration app (not production-hardened).
+
+
+2) Key user-facing capabilities
+-------------------------------
+- Create tasks:
+  - Global task creation from the header area (title + tags)
+  - Per-list quick add that can auto-apply list tag filters
+- Complete and delete tasks:
+  - Toggle completion state
+  - Delete tasks
+  - Bulk actions per list (complete all, clear completed)
+- Tag management:
+  - Create tags and maintain a global tag set
+  - Edit tags (renames propagate to tasks)
+  - Delete tags (removes tag from tasks that used it)
+- Multiple task lists:
+  - Add/remove lists (default list is protected from deletion)
+  - Configure list filters by:
+    - Tag inclusion
+    - Completion status (active/completed)
+  - Lists display filtered subsets of the same global task pool
+- Optional sample data hydration:
+  - Sample tasks, tags, and lists can be loaded at startup via an env flag
+
+
+3) Technology stack
+-------------------
+- React (functional components + hooks)
+- Vite (dev server + build tool)
+- Tailwind CSS (utility-first styling)
+- Framer Motion (animations/transitions)
+- Vitest + Testing Library (unit/component tests)
+
+
+4) High-level architecture
+--------------------------
+State management is implemented using React Contexts:
+
+- TaskContext (src/context/TaskContext.jsx)
+  Responsibilities:
+  - Stores the global list of tasks
+  - CRUD-like operations: add, toggle complete, delete
+  - Bulk operations: completeAllTasks, deleteCompletedTasks
+  - Tag propagation helpers:
+    - updateTasksWithEditedTag
+    - updateTasksWithDeletedTag
+  Notes:
+  - Maintains derived stats (total/completed/remaining)
+
+- TagContext (src/context/TagContext.jsx)
+  Responsibilities:
+  - Stores the global list of tags
+  - Adds/edits/deletes tags
+  - Collects unique tags seen on tasks (keeps tag list in sync with tasks)
+
+- ListContext (src/context/ListContext.jsx)
+  Responsibilities:
+  - Stores the array of task lists (each has title + filter configuration)
+  - List operations: add, update, delete (default is not deletable)
+  - Filtering helper:
+    - getFilteredTasks(filters, tasks)
+      Applies AND logic across all configured filters for a list
+
+
+5) Main UI composition
+----------------------
+Entry point:
+- src/index.jsx mounts <App /> into the DOM
+
+Top-level application component:
+- src/App.jsx
+  Wraps the UI in:
+    <TaskProvider> -> <TagProvider> -> <ListProvider>
+  Renders:
+  - GlobalTaskForm (for creating new tasks from the header card)
+  - TaskBoard (for rendering all lists, list configuration, tag manager modal)
+
+Core feature components:
+- Lists:
+  - src/features/lists/components/TaskBoard.jsx
+    - Renders all lists as columns/cards
+    - Manages list configuration mode and tag manager modal
+    - Provides per-list bulk actions and "Add task to this list"
+  - src/features/lists/components/TaskListConfig.jsx
+    - Edits list title and filter configuration
+  - src/features/lists/components/ListAddTask.jsx
+    - Inline task input for a specific list
+    - Auto-applies tag filters from the list
+
+- Tasks:
+  - src/features/tasks/components/TaskList.jsx
+    - Renders a list of tasks with AnimatePresence wrappers
+  - src/features/tasks/components/TaskItem.jsx
+    - Displays a single task row/card with checkbox, delete button, and tag chips
+  - src/features/tasks/components/GlobalTaskForm.jsx
+    - Global "Add task" form with tag selection/suggestions
+
+- Tags:
+  - src/features/tags/components/TagManager.jsx
+    - Tag CRUD UI (add, edit, delete)
+    - Calls TaskContext helpers to propagate edits/deletes into tasks
+
+
+6) Data hydration (sample data)
+-------------------------------
+The app can optionally pre-populate itself with sample data (tasks, tags, lists):
+
+- Data source: src/data/initialData.json
+- Loader: src/common/utils/DataHydrationService.js
+- Controlled by environment variable:
+  - VITE_ENABLE_DATA_HYDRATION === "true" enables hydration
+- Convenience npm scripts in package.json:
+  - npm run start:hydrated
+  - npm run build:hydrated
+  - npm run build:clean
+
+
+7) Testing
+----------
+Component tests live alongside components as *.test.jsx files, executed with Vitest.
+
+Examples:
+- src/features/lists/components/TaskBoard.test.jsx
+- src/features/tasks/components/TaskItem.test.jsx
+- src/features/tags/components/TagManager.test.jsx
+
+Test setup:
+- src/setupTests.js configures jest-dom matchers and mocks Framer Motion for predictable tests.
+
+
+8) How to run (developer workflow)
+----------------------------------
+Prerequisites:
+- Node.js 18+
+- npm 10+
+
+Install:
+- npm install
+
+Dev server:
+- npm start
+  (Vite runs on port 3000 per package.json)
+
+Run tests:
+- npm test
+
+Production build:
+- npm run build
+
+
+9) Repository layout (most relevant paths)
+------------------------------------------
+- src/
+  - App.jsx, index.jsx, index.css
+  - context/ (TaskContext, TagContext, ListContext)
+  - common/utils/ (DataHydrationService)
+  - data/ (initialData.json)
+  - features/
+    - tasks/components/
+    - lists/components/
+    - tags/components/
+- public/ (static assets)
+- technical_docs/ (technical documents; this file lives here)
+- package.json (scripts and dependencies)
+- vite.config.mjs / vitest.config.js (tooling configuration)
